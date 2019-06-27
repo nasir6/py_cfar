@@ -1,0 +1,5 @@
+.ipynb_checkpoints/*
+SAR-Ship-Dataset/*
+build/*
+*.jpg
+
