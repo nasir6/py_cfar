@@ -9,6 +9,7 @@
 
 using namespace cv;
 using namespace std;
+const int MINIMUM_SHIP_SIDE = 15;
 
 void save_boxes(vector<vector<int> > boundBoxes, char * output_file) {
     ofstream myfile;
@@ -48,7 +49,7 @@ vector<vector<int> > find_boxes(Mat &image) {
         box[1] = boundRect[idx].tl().y;
         box[2] = boundRect[idx].br().x - boundRect[idx].tl().x;
         box[3] = boundRect[idx].br().y - boundRect[idx].tl().y;
-        if (box[2] * box[3] > 49) {
+        if ((box[2] * box[3]) > (MINIMUM_SHIP_SIDE * MINIMUM_SHIP_SIDE)) {
             boxes.push_back(box);
         }
     }
@@ -95,7 +96,12 @@ vector<vector<int> > readGtBoxes(char * gt_file) {
 }
 
 void merge_save_image(Mat &im1, Mat &im2, char * output_file) {
+
     Mat matDst(Size(im1.cols*2 + 150, im1.rows+ + 100),im1.type(),Scalar(255,255,255));
+
+    cv::putText(matDst, "Ground Truth", cv::Point(100, 30), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0,255,0), 1, CV_AA);
+    cv::putText(matDst, "Detected", cv::Point(im1.cols + 180, 30), cv::FONT_HERSHEY_COMPLEX_SMALL, 1.0, cv::Scalar(0,0,255), 1, CV_AA);
+
     Mat matRoi = matDst(Rect(50,50,im2.cols,im2.rows));
     im1.copyTo(matRoi);
     matRoi = matDst(Rect(im1.cols + 100 ,50,im1.cols,im1.rows));

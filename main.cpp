@@ -31,8 +31,7 @@ PyCfar_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *) self;
 }
 
-static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args)
-{
+static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
     char *input_file;
     char *output_file;
     char *boxes_file;
@@ -62,17 +61,19 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args)
         gray_image = inputImage.clone();
         cvtColor(gray_image, inputImage, COLOR_GRAY2BGR);
     }
-    Mat filtered = gray_image.clone();
-    medianBlur ( gray_image, filtered, 7 );
-    // GaussianBlur( gray_image, filtered, Size( 7, 7 ), 0, 0 );
-    // equalizeHist( gray_image, equalize );
-
-    Mat inputErodedImage;
-    inputErodedImage = filtered.clone();
+    
+    Mat inputErodedImage = gray_image.clone();
     Erosion(gray_image, inputErodedImage, 1);
 
+    Mat filtered = gray_image.clone();
+
+    // GaussianBlur( gray_image, filtered, Size( 5, 5 ), 0, 0 );
+    medianBlur (inputErodedImage, filtered, 5 );
+    // equalizeHist( gray_image, filtered );
+
+
     Mat outputImage;
-    CA_CFAR(inputErodedImage, outputImage, background, guard, pixel_size, threshhold);
+    CA_CFAR(filtered, outputImage, background, guard, pixel_size, threshhold);
     
     Mat outputEroded;
     outputEroded = outputImage.clone();
