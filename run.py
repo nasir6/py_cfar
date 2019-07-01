@@ -10,28 +10,139 @@ from skimage.transform import rotate
 
 import glob
 import sys
+import shutil
+import os
 
-# source = "JPEGImages"
-# dest = "results"
+def union_area(a,b):
 
-source = "subset"
-dest = "subset_results"
-paths = glob.glob(f"/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset/{source}/*.jpg")
-CACFAR = cfar.ca_cfar
+    x = min(a[0], b[0])
+    y = min(a[1], b[1])
+    w = max(a[0]+a[2], b[0]+b[2]) - x
+    h = max(a[1]+a[3], b[1]+b[3]) - y
+    return w*h
 
-sys.stdout.write(f"\n")
-sys.stdout.flush()
+def intersection_area(a,b):
+    x = max(a[0], b[0])
+    y = max(a[1], b[1])
+    
+    w = min(a[0]+a[2], b[0]+b[2]) - x
+    h = min(a[1]+a[3], b[1]+b[3]) - y
+    if w < 0 or h < 0:
+        return 0
+    else:
+        return w * h
 
-for index in range(0, len(paths)):
-# for index in range(0, 12):
-    path = paths[index]
-    output_file = path.replace(f"{source}", f'{dest}')
-    box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
-    gt_file = box_file.replace('detection-results', 'ground-truth')
-    image = CACFAR(path, output_file, box_file, gt_file, 100, 40, 20, 1.35)
-    sys.stdout.write(f"\r {index + 1} / {len(paths)}")
+def str2int(a):
+    return [int(x) for x in a]
+
+def extract_boxes(fname):
+    with open(fname) as f:
+        content = f.readlines()
+        f.close()
+        content = [x.strip() for x in content]
+        content = [str2int(x.split(' ')[-4:]) for x in content]
+        return content
+
+def get_precision_recall(threshold):
+    paths = glob.glob("/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset/detection-results/*.txt")
+    files_stats = {}
+    falseNegative = 0
+    truePositive = 0
+    falsePositive = 0
+    trueNegative = 0
+
+    for index, path in enumerate(paths):
+        pred_bboxes = extract_boxes(path)
+        gt_bboxes = extract_boxes(path.replace('detection-results', 'ground-truth'))
+        fp = 0; tp = 0; fn = 0
+        box_index_of_tp = []
+        for index_g, gt_box in enumerate(gt_bboxes):
+            ious = []
+            for index_p, pred_box in enumerate(pred_bboxes):
+                iou = intersection_area(gt_box, pred_box) / union_area(gt_box, pred_box)
+                if iou >threshold:
+                    box_index_of_tp.append(index_p)
+                    ious.append(iou)
+
+            if len(ious) == 0:
+                fn+=1
+            elif len(ious) > 0:
+                tp+=1
+
+        diff = len(pred_bboxes) - (len(list(set(box_index_of_tp))))
+        if diff > 0:
+            fp+=diff
+
+        falseNegative+=fn
+        truePositive+=tp
+        falsePositive+=fp
+
+        files_stats[path.split('/')[-1].split('.')[0]] = {
+            "falseNegative": fn,
+            "truePositive": tp,
+            "falsePositive": fp
+        }
+
+        sys.stdout.write(f"\r {index + 1} / {len(paths)}")
+        sys.stdout.flush()
+    print(f"\n\nfalsePositives: {falsePositive} , truePositives: {truePositive} , falseNegatives: {falseNegative}")
+    recall = truePositive / (truePositive + falseNegative)
+    precision = truePositive / (truePositive + falsePositive)
+    return precision, recall
+
+def predict(source, dest): 
+    root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
+
+    paths = glob.glob(f"{root}/{source}/*.jpg")
+    shutil.rmtree(f'{root}/detection-results')
+    shutil.rmtree(f'{root}/{dest}')
+
+    if not os.path.exists(f'{root}/detection-results'):
+        os.mkdir(f'{root}/detection-results')
+        print(f"Directory  detection-results Created ")
+    
+    if not os.path.exists(f'{root}/{dest}'):
+        os.mkdir(f'{root}/{dest}')
+        print(f"Directory  {dest} Created ")
+    
+    CACFAR = cfar.ca_cfar
+
+    sys.stdout.write(f"\n")
     sys.stdout.flush()
 
-sys.stdout.write(f"\n\n")
-sys.stdout.flush()
+    for index in range(0, len(paths)):
+    # for index in range(0, 12):
+        path = paths[index]
+        output_file = path.replace(f"{source}", f'{dest}')
+        box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
+        gt_file = box_file.replace('detection-results', 'ground-truth')
+        CACFAR(path, output_file, box_file, gt_file, 100, 40, 20, 1.30)
+        sys.stdout.write(f"\r {index + 1} / {len(paths)}")
+        sys.stdout.flush()
+
+    sys.stdout.write(f"\n\n")
+    sys.stdout.flush()
+
+if __name__ == "__main__":
+    source = "JPEGImages"
+    dest = "results"
+    predict(source, dest)
+    thresholds = [0.4]
+    precisions = []
+    recalls = []
+
+    for threshold in thresholds:
+        precision, recall = get_precision_recall(threshold)
+        precisions.append(precision)
+        recalls.append(recall)
+        print(f"\nthreshold: {threshold} recall: {round(recall * 100, 2)}% precision: {round(precision*100, 2)}% \n")
+
+
+
+
+# 
+
+
+
+
     

@@ -9,7 +9,7 @@
 
 using namespace cv;
 using namespace std;
-const int MINIMUM_SHIP_SIDE = 15;
+const int MINIMUM_SHIP_SIDE = 5;
 
 void save_boxes(vector<vector<int> > boundBoxes, char * output_file) {
     ofstream myfile;
