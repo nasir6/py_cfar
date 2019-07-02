@@ -11,6 +11,19 @@ using namespace cv;
 using namespace std;
 const int MINIMUM_SHIP_SIDE = 5;
 
+int intersection_area(vector<int> a, vector<int> b){
+    int x = a[0] > b[0] ? a[0] : b[0]; 
+    int y = a[1] > b[1] ? a[1] : b[1]; 
+    
+    int w = (a[0]+a[2] < b[0]+b[2]) ? a[0]+a[2] - x : b[0]+b[2] - x;
+    int h = (a[1]+a[3] < b[1]+b[3]) ? a[1]+a[3] - y : b[1]+b[3] - y;
+    if (w < 0 || h < 0) {
+        return 0;
+    } else {
+        return w * h;
+    }
+}
+
 void save_boxes(vector<vector<int> > boundBoxes, char * output_file) {
     ofstream myfile;
     myfile.open(output_file);
@@ -27,6 +40,34 @@ void save_boxes(vector<vector<int> > boundBoxes, char * output_file) {
     }
     myfile.close();
     return;
+}
+bool aspect_ratio_check(int w, int h) {
+    double aspect_ratio = (double)w / (double)h;
+    if (w > h){
+        return aspect_ratio < 25;
+    } else {
+        return aspect_ratio > 0.04;
+    }
+}
+void box_contained_check(vector<vector<int> > &boxes, vector<int> box) {
+    // find intersection area with other boxes if contained within other box merge box boxes to one else push back
+    int box1_area = box[2] * box[3];
+    vector<int> indexes;
+
+    for (int index = 0; index < boxes.size(); index++) {
+        int intersect_area = intersection_area(box, boxes[index]);
+        int box2_area = boxes[index][2] * boxes[index][3];
+        if (intersect_area == box1_area) {
+            return;
+        }
+        if(intersect_area == box2_area) {
+            indexes.push_back(index);
+        }
+    }
+    for (int i = 0; i<indexes.size(); i++) {
+        boxes.erase(boxes.begin() + indexes[i] - i);
+    }
+    boxes.push_back(box);
 }
 
 vector<vector<int> > find_boxes(Mat &image) {
@@ -49,8 +90,9 @@ vector<vector<int> > find_boxes(Mat &image) {
         box[1] = boundRect[idx].tl().y;
         box[2] = boundRect[idx].br().x - boundRect[idx].tl().x;
         box[3] = boundRect[idx].br().y - boundRect[idx].tl().y;
-        if ((box[2] * box[3]) > (MINIMUM_SHIP_SIDE * MINIMUM_SHIP_SIDE)) {
-            boxes.push_back(box);
+        if ((box[2] * box[3]) > (MINIMUM_SHIP_SIDE * MINIMUM_SHIP_SIDE) && aspect_ratio_check(box[2], box[3])) {
+            // boxes.push_back(box);
+            box_contained_check(boxes, box);
         }
     }
 
@@ -65,7 +107,7 @@ void draw_boxes(vector<vector<int> > &boundBoxes, Mat &bgr_image, cv::Scalar col
         int t = boundBoxes[idx][1];
         int r = boundBoxes[idx][2] + l;
         int b = boundBoxes[idx][3] + t;
-        rectangle( bgr_image, Point(l, t), Point(r, b), color, 2, 8, 0 );
+        rectangle( bgr_image, Point(l, t), Point(r, b), color, 2, 2, 0 );
     }
 }
 

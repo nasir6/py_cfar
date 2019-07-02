@@ -1,4 +1,5 @@
 
+from multiprocessing import Process
 
 import cfar
 import math
@@ -60,7 +61,7 @@ def get_precision_recall(threshold):
             ious = []
             for index_p, pred_box in enumerate(pred_bboxes):
                 iou = intersection_area(gt_box, pred_box) / union_area(gt_box, pred_box)
-                if iou >threshold:
+                if iou > threshold:
                     box_index_of_tp.append(index_p)
                     ious.append(iou)
 
@@ -90,8 +91,35 @@ def get_precision_recall(threshold):
     precision = truePositive / (truePositive + falsePositive)
     return precision, recall
 
-def predict(source, dest): 
+def predict(paths, root, source, dest, i): 
+    
+    CACFAR = cfar.ca_cfar
+
+    for index in range(0, len(paths)):
+    # for index in range(0, 12):
+        path = paths[index]
+        output_file = path.replace(f"{source}", f'{dest}')
+        box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
+        gt_file = box_file.replace('detection-results', 'ground-truth')
+        CACFAR(path, output_file, box_file, gt_file, 100, 40, 20, 1.3)
+        
+        sys.stdout.write(f'\r {i}: {index + 1} / {len(paths)}')
+        sys.stdout.flush()
+    
+    sys.stdout.write(f"\r {i}: Done\n")
+    sys.stdout.flush()
+
+    # sys.stdout.write(f"\n\n")
+    # sys.stdout.flush()
+
+if __name__ == "__main__":
+    source = "subset"
+    # source = "JPEGImages"
+
+    dest = "results"
+    
     root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
+    num_of_process = 4
 
     paths = glob.glob(f"{root}/{source}/*.jpg")
     shutil.rmtree(f'{root}/detection-results')
@@ -104,29 +132,28 @@ def predict(source, dest):
     if not os.path.exists(f'{root}/{dest}'):
         os.mkdir(f'{root}/{dest}')
         print(f"Directory  {dest} Created ")
+
+    proceses = []
+    paths_per_process = len(paths) // num_of_process
+
+    for i in range(0, num_of_process):
+        start = paths_per_process*i
+        end = (i+1)*paths_per_process
+        p = Process(target=predict, args=(paths[start : end], root, source, dest, i))
+        proceses.append(p)
+        p.start()
+        
+    if end + 1 < len(paths):
+        p = Process(target=predict, args=(paths[end:], root, source, dest, num_of_process))
+        proceses.append(p)
+        p.start()
     
-    CACFAR = cfar.ca_cfar
+    for p in proceses:
+        p.join()
 
-    sys.stdout.write(f"\n")
-    sys.stdout.flush()
 
-    for index in range(0, len(paths)):
-    # for index in range(0, 12):
-        path = paths[index]
-        output_file = path.replace(f"{source}", f'{dest}')
-        box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
-        gt_file = box_file.replace('detection-results', 'ground-truth')
-        CACFAR(path, output_file, box_file, gt_file, 100, 40, 20, 1.30)
-        sys.stdout.write(f"\r {index + 1} / {len(paths)}")
-        sys.stdout.flush()
+    # predict(paths, root, source, dest)
 
-    sys.stdout.write(f"\n\n")
-    sys.stdout.flush()
-
-if __name__ == "__main__":
-    source = "JPEGImages"
-    dest = "results"
-    predict(source, dest)
     thresholds = [0.4]
     precisions = []
     recalls = []
