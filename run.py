@@ -119,7 +119,7 @@ if __name__ == "__main__":
     dest = "results"
     
     root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
-    num_of_process = 40
+    num_of_process = 30
 
     paths = glob.glob(f"{root}/{source}/*.jpg")
     os.path.exists(f'{root}/detection-results') and shutil.rmtree(f'{root}/detection-results')
@@ -164,12 +164,3 @@ if __name__ == "__main__":
         recalls.append(recall)
         print(f"\nthreshold: {threshold} recall: {round(recall * 100, 2)}% precision: {round(precision*100, 2)}% \n")
 
-
-
-
-# 
-
-
-
-
-    
