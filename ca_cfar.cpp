@@ -4,7 +4,7 @@
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 using namespace std;
-
+const int MINIMUM_PIXEL_VALUE = 100;
 int getoffset(int i, int window_size, int limit) {
   int min_index = i - floor(window_size/2);
   int max_index = i + floor(window_size/2);
@@ -39,7 +39,7 @@ void CA_CFAR(cv::Mat& inputImage, cv::Mat& outputImage, int backgroundSize, int 
     for (int j = padSize; j < cols - padSize; j++) {
       double sum = 0.0, avg = 0.0, pixel_sum = 0.0;
       pixel = (int) inputImage.at<uchar>(i,j);
-      if(pixel > 100) {
+      if(pixel > MINIMUM_PIXEL_VALUE) {
         int total_cut_pixels = 0;
         int total_bg_pixels = 0;
         if (pixel_size < 2) {

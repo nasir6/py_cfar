@@ -101,7 +101,7 @@ def predict(paths, root, source, dest, i):
         output_file = path.replace(f"{source}", f'{dest}')
         box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
         gt_file = box_file.replace('detection-results', 'ground-truth')
-        CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 2)
+        CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 1.55)
         
         sys.stdout.write(f'\r {i}: {index + 1} / {len(paths)}')
         sys.stdout.flush()
