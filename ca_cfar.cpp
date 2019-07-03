@@ -47,47 +47,46 @@ void CA_CFAR(cv::Mat& inputImage, cv::Mat& outputImage, int backgroundSize, int 
   
   int rows = inputImage.rows;
   int cols = inputImage.cols;
-
   int pixel = 0;
-  int padSize = 0;
-  
-  //floor(backgroundSize / 2);
-  // int padSize = floor(backgroundSize / 2);
-
+  int offsetX = 0;
+  int offsetY = 0;
+  vector<double> cut_sum(2);
+  vector<double> guard_sum(2);
+  vector<double> gb_sum(2);
   // int pixel_size = 20;
   /*
     TODO: add padding to input image
     Run through buffer while simulaneously filling the OpenCV matrix/image (raster).
   */
 
-  for (int i = padSize; i < rows - padSize; i++) {
-    for (int j = padSize; j < cols - padSize; j++) {
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < cols; j++) {
       double bg_avg = 0.0;
       double cut_avg = 0;
       pixel = (int) inputImage.at<uchar>(i,j);
-      if(pixel > MINIMUM_PIXEL_VALUE) {
-        if (pixel_size < 2) {
-          cut_avg = (int) inputImage.at<uchar>(i,j);
-        } else {
-          vector<double> sum = get_block_sum(inputImage, i, j, pixel_size, 0, 0);
-          cut_avg = sum[0] / sum[1];
-        }
+      if(pixel < MINIMUM_PIXEL_VALUE) {
+        outputImage.at<uchar>(i,j) = 0;
+        continue;
+      }
+      if (pixel_size < 2) {
+        cut_avg = (int) inputImage.at<uchar>(i,j);
+      } else {
+        cut_sum = get_block_sum(inputImage, i, j, pixel_size, 0, 0);
+        cut_avg = cut_sum[0] / cut_sum[1];
+      }
 
-        int offsetX = getEdgeOffset(i, backgroundSize, rows);
-        int offsetY = getEdgeOffset(j, backgroundSize, cols);
-        vector<double> sum_gb = get_block_sum(inputImage, i, j, backgroundSize, offsetX, offsetY);
-        
-        offsetX = getEdgeOffset(i, guardSize, rows);
-        offsetY = getEdgeOffset(j, guardSize, cols);
-        vector<double> sum_guard = get_block_sum(inputImage, i, j, guardSize, offsetX, offsetY);
+      offsetX = getEdgeOffset(i, backgroundSize, rows);
+      offsetY = getEdgeOffset(j, backgroundSize, cols);
+      gb_sum = get_block_sum(inputImage, i, j, backgroundSize, offsetX, offsetY);
+      
+      offsetX = getEdgeOffset(i, guardSize, rows);
+      offsetY = getEdgeOffset(j, guardSize, cols);
+      guard_sum = get_block_sum(inputImage, i, j, guardSize, offsetX, offsetY);
 
-        bg_avg = (sum_gb[0] - sum_guard[0])/(sum_gb[1] - sum_guard[1]);
-       
-        if (cut_avg > thresholdValue*bg_avg) {
-          outputImage.at<uchar>(i,j) = 255;
-        } else {
-          outputImage.at<uchar>(i,j) = 0;
-        }
+      bg_avg = (gb_sum[0] - guard_sum[0])/(gb_sum[1] - guard_sum[1]);
+      
+      if (cut_avg > thresholdValue*bg_avg) {
+        outputImage.at<uchar>(i,j) = 255;
       } else {
         outputImage.at<uchar>(i,j) = 0;
       }
