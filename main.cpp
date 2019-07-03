@@ -77,7 +77,7 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
     
     Mat outputEroded;
     outputEroded = outputImage.clone();
-    // Erosion(outputImage, outputEroded, 0);
+    // Erosion(outputImage, outputEroded, 1);
     
     Mat boxes_drawn(Size(outputEroded.cols, outputEroded.rows), CV_8UC3, Scalar(255,255,255));
     cv::cvtColor(outputEroded, boxes_drawn, cv::COLOR_GRAY2BGR);

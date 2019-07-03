@@ -101,7 +101,7 @@ def predict(paths, root, source, dest, i):
         output_file = path.replace(f"{source}", f'{dest}')
         box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
         gt_file = box_file.replace('detection-results', 'ground-truth')
-        CACFAR(path, output_file, box_file, gt_file, 100, 40, 20, 1.3)
+        CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 2)
         
         sys.stdout.write(f'\r {i}: {index + 1} / {len(paths)}')
         sys.stdout.flush()
@@ -113,17 +113,17 @@ def predict(paths, root, source, dest, i):
     # sys.stdout.flush()
 
 if __name__ == "__main__":
-    source = "subset"
-    # source = "JPEGImages"
+    # source = "subset"
+    source = "JPEGImages"
 
     dest = "results"
     
     root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
-    num_of_process = 4
+    num_of_process = 40
 
     paths = glob.glob(f"{root}/{source}/*.jpg")
-    shutil.rmtree(f'{root}/detection-results')
-    shutil.rmtree(f'{root}/{dest}')
+    os.path.exists(f'{root}/detection-results') and shutil.rmtree(f'{root}/detection-results')
+    os.path.exists(f'{root}/{dest}') and shutil.rmtree(f'{root}/{dest}')
 
     if not os.path.exists(f'{root}/detection-results'):
         os.mkdir(f'{root}/detection-results')

@@ -10,8 +10,9 @@
 using namespace cv;
 using namespace std;
 const int MINIMUM_SHIP_SIDE = 5;
+const int MINIMUM_INTER_SHIP_DIST = 6;
 
-int intersection_area(vector<int> a, vector<int> b){
+int intersection_area(vector<int> a, vector<int> b) {
     int x = a[0] > b[0] ? a[0] : b[0]; 
     int y = a[1] > b[1] ? a[1] : b[1]; 
     
@@ -49,6 +50,54 @@ bool aspect_ratio_check(int w, int h) {
         return aspect_ratio > 0.04;
     }
 }
+
+void minimum_distance_check(vector<vector<int> > &boxes) {
+    vector<int> indexes;
+    vector<vector<int> > copy(boxes.size());
+    for (int i = 0; i < boxes.size(); i++) {
+        vector<int> box(4);
+        box[0] = boxes[i][0] - (int)(MINIMUM_INTER_SHIP_DIST/2);
+        box[1] = boxes[i][1] - (int)(MINIMUM_INTER_SHIP_DIST/2);
+        box[2] = boxes[i][2] + MINIMUM_INTER_SHIP_DIST;
+        box[3] = boxes[i][3] + MINIMUM_INTER_SHIP_DIST;
+        copy[i] = box;
+    }
+
+    for (int i = 0; i < copy.size(); i++) {
+        for (int j = 0; j < copy.size(); j++) {
+            int intersect_area = intersection_area(copy[i], copy[j]);
+            if (intersect_area > 0) {
+                if (copy[i][2]*copy[i][3] < copy[j][2]*copy[j][3]) {
+                    indexes.push_back(i);
+                    break;
+                }
+            }
+        }
+    }
+    for (int i = 0; i<indexes.size(); i++) {
+        boxes.erase(boxes.begin() + indexes[i] - i);
+    }
+}
+
+void overlapping_boxes_check(vector<vector<int> > &boxes) {
+    vector<int> indexes;
+
+    for (int i = 0; i < boxes.size(); i++) {
+        for (int j = 0; j < boxes.size(); j++) {
+            int intersect_area = intersection_area(boxes[i], boxes[j]);
+            if (intersect_area > 0) {
+                if (boxes[i][2]*boxes[i][3] < boxes[j][2]*boxes[j][3]) {
+                    indexes.push_back(i);
+                    break;
+                }
+            }
+        }
+    }
+    for (int i = 0; i<indexes.size(); i++) {
+        boxes.erase(boxes.begin() + indexes[i] - i);
+    }
+}
+
 void box_contained_check(vector<vector<int> > &boxes, vector<int> box) {
     // find intersection area with other boxes if contained within other box merge box boxes to one else push back
     int box1_area = box[2] * box[3];
@@ -95,6 +144,8 @@ vector<vector<int> > find_boxes(Mat &image) {
             box_contained_check(boxes, box);
         }
     }
+    // overlapping_boxes_check(boxes);
+    minimum_distance_check(boxes);
 
     return boxes;
 
