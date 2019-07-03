@@ -20,7 +20,7 @@ int getEdgeOffset(int i, int window_size, int limit) {
   }
 }
 
-vector<double> block_sum(cv::Mat& inputImage, int i, int j, int blockSize, int offsetX, int offsetY) {
+vector<double> get_block_sum(cv::Mat& inputImage, int i, int j, int blockSize, int offsetX, int offsetY) {
   int rows = inputImage.rows;
   int cols = inputImage.cols;
   int totalPixels = 0;
@@ -66,24 +66,22 @@ void CA_CFAR(cv::Mat& inputImage, cv::Mat& outputImage, int backgroundSize, int 
       double cut_avg = 0;
       pixel = (int) inputImage.at<uchar>(i,j);
       if(pixel > MINIMUM_PIXEL_VALUE) {
-        int total_bg_pixels = 0;
-        double sum;
         if (pixel_size < 2) {
           cut_avg = (int) inputImage.at<uchar>(i,j);
         } else {
-          vector<double> sum_count = block_sum(inputImage, i, j, pixel_size, 0, 0);
-          cut_avg = sum_count[0] / sum_count[1];
+          vector<double> sum = get_block_sum(inputImage, i, j, pixel_size, 0, 0);
+          cut_avg = sum[0] / sum[1];
         }
-        
+
         int offsetX = getEdgeOffset(i, backgroundSize, rows);
         int offsetY = getEdgeOffset(j, backgroundSize, cols);
-        vector<double> sum_count_gb = block_sum(inputImage, i, j, backgroundSize, offsetX, offsetY);
+        vector<double> sum_gb = get_block_sum(inputImage, i, j, backgroundSize, offsetX, offsetY);
         
         offsetX = getEdgeOffset(i, guardSize, rows);
         offsetY = getEdgeOffset(j, guardSize, cols);
-        vector<double> sum_count_guard = block_sum(inputImage, i, j, guardSize, offsetX, offsetY);
+        vector<double> sum_guard = get_block_sum(inputImage, i, j, guardSize, offsetX, offsetY);
 
-        bg_avg = (sum_count_gb[0] - sum_count_guard[0])/(sum_count_gb[1] - sum_count_guard[1]);
+        bg_avg = (sum_gb[0] - sum_guard[0])/(sum_gb[1] - sum_guard[1]);
        
         if (cut_avg > thresholdValue*bg_avg) {
           outputImage.at<uchar>(i,j) = 255;
