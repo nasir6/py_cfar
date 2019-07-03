@@ -73,7 +73,8 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
 
 
     Mat outputImage;
-    CA_CFAR(filtered, outputImage, background, guard, pixel_size, threshhold);
+    CA_CFAR ca_cfar(background, guard, pixel_size, threshhold);
+    ca_cfar.mask(filtered, outputImage);
     
     Mat outputEroded;
     outputEroded = outputImage.clone();

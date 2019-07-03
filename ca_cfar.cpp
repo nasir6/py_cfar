@@ -3,10 +3,13 @@
 
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
+#include "ca_cfar.h"
+
 using namespace std;
+
 const int MINIMUM_PIXEL_VALUE = 100;
 
-int getEdgeOffset(int i, int window_size, int limit) {
+int CA_CFAR::getEdgeOffset(int i, int window_size, int limit) {
   int min_index = i - floor(window_size/2);
   int max_index = i + floor(window_size/2);
   if (min_index > 0 && max_index < limit) {
@@ -20,9 +23,8 @@ int getEdgeOffset(int i, int window_size, int limit) {
   }
 }
 
-vector<double> get_block_sum(cv::Mat& inputImage, int i, int j, int blockSize, int offsetX, int offsetY) {
-  int rows = inputImage.rows;
-  int cols = inputImage.cols;
+vector<double> CA_CFAR::get_block_sum(cv::Mat& inputImage, int i, int j, int blockSize) {
+
   int totalPixels = 0;
   int blockSum = 0;
   for(int x = -floor(blockSize/2); x <= floor(blockSize/2); x++) {
@@ -40,19 +42,26 @@ vector<double> get_block_sum(cv::Mat& inputImage, int i, int j, int blockSize, i
   vector<double> sum_count = {(double) blockSum ,(double) totalPixels}; 
   return sum_count;
 }
+CA_CFAR::CA_CFAR(int _backgroundSize, int _guardSize, int _pixel_size, double _thresholdValue) {
+  backgroundSize = _backgroundSize;
+  guardSize = _guardSize;
+  pixel_size = _pixel_size;
+  thresholdValue = _thresholdValue;
+}
 
-void CA_CFAR(cv::Mat& inputImage, cv::Mat& outputImage, int backgroundSize, int guardSize, int pixel_size, double thresholdValue) {
+void CA_CFAR::mask(cv::Mat& inputImage, cv::Mat& outputImage) {
   outputImage = inputImage.clone();
   outputImage.setTo(cv::Scalar::zeros());
   
-  int rows = inputImage.rows;
-  int cols = inputImage.cols;
-  int pixel = 0;
-  int offsetX = 0;
-  int offsetY = 0;
-  vector<double> cut_sum(2);
-  vector<double> guard_sum(2);
-  vector<double> bg_sum(2);
+  rows = inputImage.rows;
+  cols = inputImage.cols;
+
+  // int pixel = 0;
+  // int offsetX = 0;
+  // int offsetY = 0;
+  // vector<double> cut_sum(2);
+  // vector<double> guard_sum(2);
+  // vector<double> bg_sum(2);
   // int pixel_size = 20;
   /*
     TODO: add padding to input image
@@ -61,27 +70,28 @@ void CA_CFAR(cv::Mat& inputImage, cv::Mat& outputImage, int backgroundSize, int 
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
-      double bg_avg = 0.0;
-      double cut_avg = 0;
       pixel = (int) inputImage.at<uchar>(i,j);
       if(pixel < MINIMUM_PIXEL_VALUE) {
         outputImage.at<uchar>(i,j) = 0;
         continue;
       }
+
       if (pixel_size < 2) {
         cut_avg = (int) inputImage.at<uchar>(i,j);
       } else {
-        cut_sum = get_block_sum(inputImage, i, j, pixel_size, 0, 0);
+        offsetX = 0;
+        offsetY = 0;
+        cut_sum = get_block_sum(inputImage, i, j, pixel_size);
         cut_avg = cut_sum[0] / cut_sum[1];
       }
 
       offsetX = getEdgeOffset(i, backgroundSize, rows);
       offsetY = getEdgeOffset(j, backgroundSize, cols);
-      bg_sum = get_block_sum(inputImage, i, j, backgroundSize, offsetX, offsetY);
+      bg_sum = get_block_sum(inputImage, i, j, backgroundSize);
       
       offsetX = getEdgeOffset(i, guardSize, rows);
       offsetY = getEdgeOffset(j, guardSize, cols);
-      guard_sum = get_block_sum(inputImage, i, j, guardSize, offsetX, offsetY);
+      guard_sum = get_block_sum(inputImage, i, j, guardSize);
 
       bg_avg = (bg_sum[0] - guard_sum[0])/(bg_sum[1] - guard_sum[1]);
       
