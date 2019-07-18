@@ -79,25 +79,6 @@ void minimum_distance_check(vector<vector<int> > &boxes) {
     }
 }
 
-void overlapping_boxes_check(vector<vector<int> > &boxes) {
-    vector<int> indexes;
-
-    for (int i = 0; i < boxes.size(); i++) {
-        for (int j = 0; j < boxes.size(); j++) {
-            int intersect_area = intersection_area(boxes[i], boxes[j]);
-            if (intersect_area > 0) {
-                if (boxes[i][2]*boxes[i][3] < boxes[j][2]*boxes[j][3]) {
-                    indexes.push_back(i);
-                    break;
-                }
-            }
-        }
-    }
-    for (int i = 0; i<indexes.size(); i++) {
-        boxes.erase(boxes.begin() + indexes[i] - i);
-    }
-}
-
 void box_contained_check(vector<vector<int> > &boxes, vector<int> box) {
     // find intersection area with other boxes if contained within other box merge box boxes to one else push back
     int box1_area = box[2] * box[3];
@@ -140,11 +121,9 @@ vector<vector<int> > find_boxes(Mat &image) {
         box[2] = boundRect[idx].br().x - boundRect[idx].tl().x;
         box[3] = boundRect[idx].br().y - boundRect[idx].tl().y;
         if ((box[2] * box[3]) > (MINIMUM_SHIP_SIDE * MINIMUM_SHIP_SIDE) && aspect_ratio_check(box[2], box[3])) {
-            // boxes.push_back(box);
-            box_contained_check(boxes, box);
+            boxes.push_back(box);
         }
     }
-    // overlapping_boxes_check(boxes);
     minimum_distance_check(boxes);
 
     return boxes;

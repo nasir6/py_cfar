@@ -91,6 +91,9 @@ def get_precision_recall(threshold):
     precision = truePositive / (truePositive + falsePositive)
     return precision, recall
 
+def copy(path, source, dest='land'):
+    os.system(f"cp -r {path} {path.replace(source, dest)}")
+
 def predict(paths, root, source, dest, i): 
     
     CACFAR = cfar.ca_cfar
@@ -101,8 +104,10 @@ def predict(paths, root, source, dest, i):
         output_file = path.replace(f"{source}", f'{dest}')
         box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
         gt_file = box_file.replace('detection-results', 'ground-truth')
-        CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 1.55)
-        
+        should_copy = CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 1.55)
+        if should_copy:
+            copy(path, source, 'land')
+
         sys.stdout.write(f'\r {i}: {index + 1} / {len(paths)}')
         sys.stdout.flush()
     
@@ -113,13 +118,13 @@ def predict(paths, root, source, dest, i):
     # sys.stdout.flush()
 
 if __name__ == "__main__":
-    source = "subset"
-    # source = "JPEGImages"
+    # source = "subset"
+    source = "JPEGImages"
 
     dest = "results"
     
     root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
-    num_of_process = 3
+    num_of_process = 20
 
     paths = glob.glob(f"{root}/{source}/*.jpg")
     os.path.exists(f'{root}/detection-results') and shutil.rmtree(f'{root}/detection-results')

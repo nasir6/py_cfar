@@ -10,6 +10,7 @@ using namespace std;
 
 
 class CA_CFAR {
+    const int MINIMUM_PIXEL_VALUE = 100;
     int rows = 0;
     int cols = 0;
     int pixel = 0;

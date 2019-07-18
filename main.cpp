@@ -67,7 +67,7 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
 
     Mat filtered = gray_image.clone();
 
-    // GaussianBlur( gray_image, filtered, Size( 5, 5 ), 0, 0 );
+    // GaussianBlur( gray_image, filtered, Size( 9, 9 ), 0, 0 );
     medianBlur (inputErodedImage, filtered, 5 );
     // equalizeHist( gray_image, filtered );
 
@@ -93,7 +93,13 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
 
     merge_save_image(inputImage, boxes_drawn, output_file);
 
-    return Py_BuildValue("O", build_image_array(outputEroded));
+    double ratio = boundBoxes.size() / (double) gt_boxes.size();
+    if (ratio > 2.00 || ratio < 1) {
+        Py_RETURN_TRUE;
+    }
+
+    Py_RETURN_FALSE;
+    // return Py_BuildValue("O", build_image_array(outputEroded));
 }
 
 

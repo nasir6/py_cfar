@@ -7,7 +7,6 @@
 
 using namespace std;
 
-const int MINIMUM_PIXEL_VALUE = 100;
 
 int CA_CFAR::getEdgeOffset(int i, int window_size, int limit) {
   int min_index = i - floor(window_size/2);
@@ -42,6 +41,7 @@ vector<double> CA_CFAR::get_block_sum(cv::Mat& inputImage, int i, int j, int blo
   vector<double> sum_count = {(double) blockSum ,(double) totalPixels}; 
   return sum_count;
 }
+
 CA_CFAR::CA_CFAR(int _backgroundSize, int _guardSize, int _pixel_size, double _thresholdValue) {
   backgroundSize = _backgroundSize;
   guardSize = _guardSize;
@@ -55,18 +55,6 @@ void CA_CFAR::mask(cv::Mat& inputImage, cv::Mat& outputImage) {
   
   rows = inputImage.rows;
   cols = inputImage.cols;
-
-  // int pixel = 0;
-  // int offsetX = 0;
-  // int offsetY = 0;
-  // vector<double> cut_sum(2);
-  // vector<double> guard_sum(2);
-  // vector<double> bg_sum(2);
-  // int pixel_size = 20;
-  /*
-    TODO: add padding to input image
-    Run through buffer while simulaneously filling the OpenCV matrix/image (raster).
-  */
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
