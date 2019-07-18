@@ -1,5 +1,5 @@
 .ipynb_checkpoints/*
-.vscode/*
+.vscode
 nohup.out
 SAR-Ship-Dataset/*
 build/*
