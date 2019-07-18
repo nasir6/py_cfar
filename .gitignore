@@ -1,4 +1,6 @@
 .ipynb_checkpoints/*
+.vscode/*
+nohup.out
 SAR-Ship-Dataset/*
 build/*
 *.jpg

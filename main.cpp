@@ -93,13 +93,13 @@ static PyObject * PyRunCaCfar(PyCfar *self, PyObject* args) {
 
     merge_save_image(inputImage, boxes_drawn, output_file);
 
-    double ratio = boundBoxes.size() / (double) gt_boxes.size();
-    if (ratio > 2.00 || ratio < 1) {
-        Py_RETURN_TRUE;
-    }
+    // double ratio = boundBoxes.size() / (double) gt_boxes.size();
+    // if (ratio > 2.00 || ratio < 1) {
+    //     Py_RETURN_TRUE;
+    // }
 
-    Py_RETURN_FALSE;
-    // return Py_BuildValue("O", build_image_array(outputEroded));
+    // Py_RETURN_FALSE;
+    return Py_BuildValue("O", build_image_array(outputEroded));
 }
 
 

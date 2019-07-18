@@ -14,6 +14,8 @@ import sys
 import shutil
 import os
 
+data_dir = '/media/nasir/Drive1/code/SAR/python_cfar/SAR-Ship-Dataset'
+
 def union_area(a,b):
 
     x = min(a[0], b[0])
@@ -45,7 +47,7 @@ def extract_boxes(fname):
         return content
 
 def get_precision_recall(threshold):
-    paths = glob.glob("/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset/detection-results/*.txt")
+    paths = glob.glob(f"{data_dir}/detection-results/*.txt")
     files_stats = {}
     falseNegative = 0
     truePositive = 0
@@ -94,9 +96,13 @@ def get_precision_recall(threshold):
 def copy(path, source, dest='land'):
     os.system(f"cp -r {path} {path.replace(source, dest)}")
 
-def predict(paths, root, source, dest, i): 
+def predict(paths, data_dir, source, dest, i): 
     
     CACFAR = cfar.ca_cfar
+    background_size = 100
+    guard_size = 40
+    cut_size = 30
+    threshold_factor = 1.55
 
     for index in range(0, len(paths)):
     # for index in range(0, 12):
@@ -104,9 +110,8 @@ def predict(paths, root, source, dest, i):
         output_file = path.replace(f"{source}", f'{dest}')
         box_file = path.replace(f"{source}", 'detection-results').replace('.jpg', '.txt')
         gt_file = box_file.replace('detection-results', 'ground-truth')
-        should_copy = CACFAR(path, output_file, box_file, gt_file, 100, 40, 30, 1.55)
-        if should_copy:
-            copy(path, source, 'land')
+        
+        CACFAR(path, output_file, box_file, gt_file, background_size, guard_size, cut_size, threshold_factor)
 
         sys.stdout.write(f'\r {i}: {index + 1} / {len(paths)}')
         sys.stdout.flush()
@@ -121,21 +126,20 @@ if __name__ == "__main__":
     # source = "subset"
     source = "JPEGImages"
 
-    dest = "results"
+    dest = "boxes_drawn"
     
-    root = "/media/nasir/Drive1/code/SAR/AutomatedSARShipDetection/python_cfar/SAR-Ship-Dataset"
     num_of_process = 20
 
-    paths = glob.glob(f"{root}/{source}/*.jpg")
-    os.path.exists(f'{root}/detection-results') and shutil.rmtree(f'{root}/detection-results')
-    os.path.exists(f'{root}/{dest}') and shutil.rmtree(f'{root}/{dest}')
+    paths = glob.glob(f"{data_dir}/{source}/*.jpg")
+    os.path.exists(f'{data_dir}/detection-results') and shutil.rmtree(f'{data_dir}/detection-results')
+    os.path.exists(f'{data_dir}/{dest}') and shutil.rmtree(f'{data_dir}/{dest}')
 
-    if not os.path.exists(f'{root}/detection-results'):
-        os.mkdir(f'{root}/detection-results')
+    if not os.path.exists(f'{data_dir}/detection-results'):
+        os.mkdir(f'{data_dir}/detection-results')
         print(f"Directory  detection-results Created ")
     
-    if not os.path.exists(f'{root}/{dest}'):
-        os.mkdir(f'{root}/{dest}')
+    if not os.path.exists(f'{data_dir}/{dest}'):
+        os.mkdir(f'{data_dir}/{dest}')
         print(f"Directory  {dest} Created ")
 
     proceses = []
@@ -144,28 +148,27 @@ if __name__ == "__main__":
     for i in range(0, num_of_process):
         start = paths_per_process*i
         end = (i+1)*paths_per_process
-        p = Process(target=predict, args=(paths[start : end], root, source, dest, i))
+        p = Process(target=predict, args=(paths[start : end], data_dir, source, dest, i))
         proceses.append(p)
         p.start()
         
     if end + 1 < len(paths):
-        p = Process(target=predict, args=(paths[end:], root, source, dest, num_of_process))
+        p = Process(target=predict, args=(paths[end:], data_dir, source, dest, num_of_process))
         proceses.append(p)
         p.start()
     
     for p in proceses:
         p.join()
 
+    # predict(paths, data_dir, source, dest)
 
-    # predict(paths, root, source, dest)
+    # thresholds = [0.4]
+    # precisions = []
+    # recalls = []
 
-    thresholds = [0.4]
-    precisions = []
-    recalls = []
-
-    for threshold in thresholds:
-        precision, recall = get_precision_recall(threshold)
-        precisions.append(precision)
-        recalls.append(recall)
-        print(f"\nthreshold: {threshold} recall: {round(recall * 100, 2)}% precision: {round(precision*100, 2)}% \n")
+    # for threshold in thresholds:
+    #     precision, recall = get_precision_recall(threshold)
+    #     precisions.append(precision)
+    #     recalls.append(recall)
+    #     print(f"\nthreshold: {threshold} recall: {round(recall * 100, 2)}% precision: {round(precision*100, 2)}% \n")
 

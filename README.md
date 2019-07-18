@@ -1,8 +1,9 @@
 ## Vessel Detection in Synthetic Aperture Radar(SAR) Images
-### Dataset
-A recently published dataset consisting of 43,819 ship chips is used to evaluate vessel detection "A SAR Dataset of Ship Detection for Deep Learning under Complex Backgrounds" [GitHub](https://github.com/CAESAR-Radi/SAR-Ship-Dataset)
-[Paper](https://www.mdpi.com/2072-4292/11/7/765/htm)
+This repo is created to evaluate the vessel detections in SAR images though traditional methods e.g different variants of CFAR and deep learning target detection architectures. 
+An annotated dataset by SAR experts was recently published consisting of 43,819 ship chips is used to evaluate vessel detection "A SAR Dataset of Ship Detection for Deep Learning under Complex Backgrounds" [GitHub](https://github.com/CAESAR-Radi/SAR-Ship-Dataset)
+[Paper](https://www.mdpi.com/2072-4292/11/7/765/htm). This dataset is used to evaluate the detection. We split the dataset into training and evaluation sets. Evaluation set consists of Last 3819 images. First 40000 images are used for training deep-learning models. 
 
+This repo detects vessels through CA CFAR and saves the results for further evaluation.
 ### Pre Processing
 
 Morphological operations such as erosion is applied to the images. Erosion removes islands and small objects(speckle) so that only substantive targets remain in SAR images. Then we apply median blur filter to eroded image.
@@ -16,5 +17,20 @@ To come up with the threshold value CA CFAR algorithm is used. A sliding window 
     - a is scaling factor
     - Pn is noise power estimated by background cells 
 - CUT is classified as target(vessel) when CUT > T
+
+CFAR algorithm and other pipeline operations are extended in python from c++ to gain real time detection results. 
+We use opencv for Morphological operations, image blur filters, bounding boxes rendering. 
+
+The detection boxes are drawn with ground truth boxes and saved for visualization, results are stored in txt file for each image with original filename in following format.
+
+    Ship 0.8 x y w h
+
+To run the detection on dataset set data_dir in run.py and run parse_xml.py to parse ground truth from xml file to a text file in following format
+    
+    Ship x y w h
+
+    python parse_xml.py
+    python setup.py install
+    python run.py
 
 For more details and experimental results [DropBox Paper](https://paper.dropbox.com/doc/SAR-vessel-detection--Ag8sKJlxfjm1uQAg_B7BwnabAg-i6ifPVu9dKsqu7dwgKoJa)
