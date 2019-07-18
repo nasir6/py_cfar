@@ -33,4 +33,3 @@ To run the detection on dataset set data_dir in run.py and run parse_xml.py to p
     python setup.py install
     python run.py
 
-For more details and experimental results [DropBox Paper](https://paper.dropbox.com/doc/SAR-vessel-detection--Ag8sKJlxfjm1uQAg_B7BwnabAg-i6ifPVu9dKsqu7dwgKoJa)
