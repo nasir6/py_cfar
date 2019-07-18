@@ -7,7 +7,6 @@
 
 using namespace std;
 
-
 int CA_CFAR::getEdgeOffset(int i, int window_size, int limit) {
   int min_index = i - floor(window_size/2);
   int max_index = i + floor(window_size/2);
